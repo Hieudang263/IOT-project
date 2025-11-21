@@ -1,0 +1,20 @@
+{
+    "idf.portWin": "COM12",
+    "idf.openOcdConfigs": [
+        "board/esp32s3-bridge.cfg"
+    ],
+    "files.associations": {
+        "array": "cpp",
+        "deque": "cpp",
+        "list": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp",
+        "string_view": "cpp",
+        "format": "cpp",
+        "initializer_list": "cpp",
+        "span": "cpp",
+        "regex": "cpp"
+    },
+    "cmake.sourceDirectory": "C:/Bach Khoa/year 3/IOT/ASSIGNMENT/YoloUNO_PlatformIO-RTOS_Project/lib/ArduinoJson/src"
+}
