@@ -1,164 +1,1019 @@
-﻿<!DOCTYPE HTML>
+﻿<!DOCTYPE html>
 <html lang="vi">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bảng điều khiển YOLO UNO</title>
+  <title>ESP32 Control Panel</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="styles.css">
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
 
-  <!-- Thư viện -->
-  <script src="https://cdn.jsdelivr.net/npm/raphael@2.3.0/raphael.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/justgage@1.3.5/justgage.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .header h1 {
+      color: #667eea;
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    /* Navigation Tabs */
+    .tabs {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      flex: 1;
+      min-width: 150px;
+      padding: 16px;
+      background: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      color: #666;
+    }
+
+    .tab:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+    }
+
+    /* Content Sections */
+    .content-section {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .content-section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Card Styles */
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .card h2 {
+      color: #333;
+      font-size: 22px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card p {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    /* LED Control (from previous design) */
+    .led-card {
+      background: #f8f9ff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .led-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .led-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .led-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .led-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      width: 56px;
+      height: 30px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.3s;
+      border-radius: 30px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 22px;
+      width: 22px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+
+    /* Brightness Control */
+    .brightness-control {
+      margin-top: 12px;
+    }
+
+    .brightness-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      color: #666;
+      font-size: 13px;
+    }
+
+    .brightness-value {
+      font-weight: 700;
+      font-size: 16px;
+      color: #667eea;
+    }
+
+    .slider-container {
+      position: relative;
+      width: 100%;
+      height: 36px;
+      display: flex;
+      align-items: center;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 5px;
+      background: #ddd;
+      outline: none;
+      transition: background 0.3s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(102, 126, 234, 0.4);
+      transition: all 0.3s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 6px rgba(102, 126, 234, 0.4);
+    }
+
+    input[type="range"]:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .slider-container.slider-enabled input[type="range"] {
+      background: linear-gradient(to right, #667eea 0%, #764ba2 100%);
+    }
+
+    /* Sensor Display */
+    .sensor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .sensor-item {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border-radius: 12px;
+      padding: 20px;
+      color: white;
+      text-align: center;
+    }
+
+    .sensor-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+
+    .sensor-label {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 8px;
+    }
+
+    .sensor-value {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .sensor-unit {
+      font-size: 16px;
+      opacity: 0.8;
+    }
+
+    .sensor-status {
+      margin-top: 8px;
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 15px;
+      transition: all 0.3s;
+      background: white;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-group small {
+      display: block;
+      color: #999;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    /* WiFi List */
+    .wifi-list {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+
+    .wifi-item {
+      padding: 16px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: background 0.3s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .wifi-item:last-child {
+      border-bottom: none;
+    }
+
+    .wifi-item:hover {
+      background: #f8f9ff;
+    }
+
+    .wifi-item.selected {
+      background: #667eea;
+      color: white;
+    }
+
+    .wifi-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .wifi-signal {
+      font-size: 20px;
+    }
+
+    .wifi-name {
+      font-weight: 600;
+    }
+
+    .wifi-security {
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 14px 24px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .btn-full {
+      width: 100%;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Alert Messages */
+    .alert {
+      padding: 14px 16px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+    }
+
+    .alert.show {
+      display: flex;
+    }
+
+    .alert-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .alert-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .alert-info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .tabs {
+        flex-direction: column;
+      }
+      
+      .tab {
+        min-width: 100%;
+      }
+
+      .btn-group {
+        flex-direction: column;
+      }
+
+      .header h1 {
+        font-size: 24px;
+      }
+    }
+
+    /* Hide scrollbar for webkit browsers */
+    .wifi-list::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .wifi-list::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    .wifi-list::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 10px;
+    }
+
+    .wifi-list::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+  </style>
 </head>
-
 <body>
-
-  <!-- Thanh bên -->
-  <div class="sidebar">
-    <div class="logo-container">
-      <img class="logo-img"
-        src="data:image/png;base64,...(bỏ qua logo cho ngắn)..." alt="Logo">
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>🎛️ ESP32 Control Panel</h1>
+      <p>Access Point Mode - Quản lý và điều khiển thiết bị</p>
     </div>
 
-    <div class="nav-item active" onclick="showSection('home', event)">🏠 <span>Trang chủ</span></div>
-    <div class="nav-item" onclick="showSection('device', event)">⚡ <span>Thiết bị</span></div>
-    <div class="nav-item" onclick="showSection('info', event)">ℹ️ <span>Thông tin</span></div>
-    <div class="nav-item" onclick="showSection('settings', event)">⚙️ <span>Cài đặt</span></div>
-  </div>
+    <!-- Navigation Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('testmode')">🔬 Test Mode</button>
+      <button class="tab" onclick="showTab('wifi')">📶 WiFi Settings</button>
+      <button class="tab" onclick="showTab('ap')">🌐 AP Settings</button>
+      <button class="tab" onclick="showTab('sensor')">🌡️ Sensors</button>
+    </div>
 
-  <!-- Nội dung chính -->
-  <div class="main-content">
+    <!-- Test Mode Section -->
+    <div id="testmode" class="content-section active">
+      <div class="card">
+        <h2>💡 LED Control</h2>
+        <p>Điều khiển độ sáng của 2 LED</p>
 
-    <!-- TRANG CHỦ -->
-    <div id="home" class="section fade-in">
-      <header>
-        <h1>Bảng điều khiển môi trường</h1>
-        <p>Giám sát nhiệt độ và độ ẩm theo thời gian thực</p>
-      </header>
-
-      <div class="gauges-container">
-        <div class="gauge-card">
-          <h2>🌡️ Nhiệt độ (°C)</h2>
-          <div id="gauge_temp"></div>
+        <!-- LED 1 -->
+        <div class="led-card">
+          <div class="led-header">
+            <div class="led-title">
+              <div class="led-icon">💡</div>
+              <span class="led-name">LED 1 (GPIO 48)</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="led1Toggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="brightness-control">
+            <div class="brightness-label">
+              <span>Độ sáng</span>
+              <span class="brightness-value" id="led1Value">50%</span>
+            </div>
+            <div class="slider-container" id="led1SliderContainer">
+              <input type="range" id="led1Brightness" min="0" max="100" value="50" disabled>
+            </div>
+          </div>
         </div>
 
-        <div class="gauge-card">
-          <h2>💧 Độ ẩm (%)</h2>
-          <div id="gauge_humi"></div>
+        <!-- LED 2 -->
+        <div class="led-card">
+          <div class="led-header">
+            <div class="led-title">
+              <div class="led-icon">💡</div>
+              <span class="led-name">LED 2 (GPIO 41)</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="led2Toggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="brightness-control">
+            <div class="brightness-label">
+              <span>Độ sáng</span>
+              <span class="brightness-value" id="led2Value">50%</span>
+            </div>
+            <div class="slider-container" id="led2SliderContainer">
+              <input type="range" id="led2Brightness" min="0" max="100" value="50" disabled>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- THIẾT BỊ -->
-    <div id="device" class="section" style="display:none;">
-      <header>
-        <h1>Điều khiển Relay</h1>
-        <p>Quản lý và điều khiển các relay được kết nối.</p>
-      </header>
+    <!-- WiFi Settings Section -->
+    <div id="wifi" class="content-section">
+      <div class="card">
+        <h2>📶 WiFi Configuration</h2>
+        <p>Kết nối ESP32 vào mạng WiFi</p>
 
-      <div class="device-list" id="relayContainer"></div>
+        <div id="wifiAlert" class="alert"></div>
 
-      <button class="add-relay-btn" onclick="openAddRelayDialog()">
-        <i class="fa-solid fa-plus"></i>
-      </button>
-    </div>
+        <button class="btn btn-primary btn-full" onclick="scanWiFi()" id="scanBtn">
+          <span>🔍</span>
+          <span>Quét mạng WiFi</span>
+        </button>
 
-    <!-- THÔNG TIN -->
-    <div id="info" class="section" style="display:none;">
-      <header>
-        <h1>Thông tin thiết bị</h1>
-        <p>Chi tiết hệ thống và firmware sẽ hiển thị tại đây.</p>
-      </header>
-    </div>
-
-    <!-- CÀI ĐẶT -->
-    <div id="settings" class="section settings-section" style="display:none;">
-      <div class="settings-card">
-        <h2><i class="fa-solid fa-gear"></i> Cấu hình thiết bị</h2>
-        <p>Nhập thông tin Wi-Fi và MQTT CoreIOT của bạn bên dưới.</p>
-
-        <form id="settingsForm">
-          <!-- WiFi -->
-          <div class="input-group">
-            <i class="fa-solid fa-wifi"></i>
-            <input type="text" id="ssid" placeholder="Tên Wi-Fi (SSID)" required>
+        <div id="wifiListContainer" style="display: none; margin-top: 20px;">
+          <label style="font-weight: 600; margin-bottom: 8px; display: block;">Chọn mạng WiFi:</label>
+          <div class="wifi-list" id="wifiList">
+            <!-- WiFi networks will be populated here -->
           </div>
+        </div>
 
-          <div class="input-group">
-            <i class="fa-solid fa-lock"></i>
-            <input type="password" id="password" placeholder="Mật khẩu Wi-Fi" required>
-          </div>
+        <div class="form-group" style="margin-top: 20px;">
+          <label>Tên WiFi (SSID)</label>
+          <input type="text" id="wifiSSID" placeholder="Nhập tên WiFi hoặc chọn từ danh sách">
+          <small>Chọn từ danh sách hoặc nhập thủ công</small>
+        </div>
 
-          <!-- CoreIOT MQTT -->
-          <div class="input-group">
-            <i class="fa-solid fa-server"></i>
-            <input type="text" id="server" placeholder="Server (app.coreiot.io)" required>
-          </div>
+        <div class="form-group">
+          <label>Mật khẩu WiFi</label>
+          <input type="password" id="wifiPassword" placeholder="Nhập mật khẩu WiFi">
+        </div>
 
-          <div class="input-group">
-            <i class="fa-solid fa-plug"></i>
-            <input type="number" id="port" placeholder="Port (1883)" required>
-          </div>
-
-          <div class="input-group">
-            <i class="fa-solid fa-fingerprint"></i>
-            <input type="text" id="client_id" placeholder="Client ID (MQTT)" required>
-          </div>
-
-          <div class="input-group">
-            <i class="fa-solid fa-user"></i>
-            <input type="text" id="mqtt_username" placeholder="Username (MQTT)" required>
-          </div>
-
-          <div class="input-group">
-            <i class="fa-solid fa-key"></i>
-            <input type="password" id="mqtt_password" placeholder="Password (MQTT)">
-          </div>
-
-          <button type="submit" class="btn-save">
-            <i class="fa-solid fa-floppy-disk"></i> Lưu cấu hình
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="connectWiFi()" style="flex: 1;">
+            <span>✅</span>
+            <span>Kết nối</span>
           </button>
-        </form>
+          <button class="btn btn-secondary" onclick="clearWiFiForm()">
+            <span>🔄</span>
+            <span>Reset</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AP Settings Section -->
+    <div id="ap" class="content-section">
+      <div class="card">
+        <h2>🌐 Access Point Configuration</h2>
+        <p>Tùy chỉnh tên và mật khẩu của Access Point</p>
+
+        <div id="apAlert" class="alert"></div>
+
+        <div class="form-group">
+          <label>Tên Access Point (SSID)</label>
+          <input type="text" id="apSSID" placeholder="ESP32-Setup-Wifi" value="ESP32-Setup-Wifi">
+          <small>Tên WiFi mà ESP32 phát ra</small>
+        </div>
+
+        <div class="form-group">
+          <label>Mật khẩu Access Point</label>
+          <input type="password" id="apPassword" placeholder="123456789" value="123456789">
+          <small>Tối thiểu 8 ký tự. Để trống nếu muốn AP không có mật khẩu</small>
+        </div>
+
+        <button class="btn btn-primary btn-full" onclick="saveAPConfig()">
+          <span>💾</span>
+          <span>Lưu cấu hình AP</span>
+        </button>
+
+        <div style="margin-top: 20px; padding: 16px; background: #fff3cd; border-radius: 10px; border: 1px solid #ffc107;">
+          <strong>⚠️ Lưu ý:</strong> Sau khi lưu, ESP32 sẽ khởi động lại với cấu hình mới. Bạn cần kết nối lại với tên và mật khẩu mới.
+        </div>
+      </div>
+    </div>
+
+    <!-- Sensor Section -->
+    <div id="sensor" class="content-section">
+      <div class="card">
+        <h2>🌡️ Sensor Monitor</h2>
+        <p>Hiển thị dữ liệu từ cảm biến DHT20 (nếu có)</p>
+
+        <div class="sensor-grid">
+          <div class="sensor-item">
+            <div class="sensor-icon">🌡️</div>
+            <div class="sensor-label">Nhiệt độ</div>
+            <div class="sensor-value" id="tempValue">--</div>
+            <div class="sensor-unit">°C</div>
+            <div class="sensor-status" id="tempStatus">Đang đọc...</div>
+          </div>
+
+          <div class="sensor-item">
+            <div class="sensor-icon">💧</div>
+            <div class="sensor-label">Độ ẩm</div>
+            <div class="sensor-value" id="humiValue">--</div>
+            <div class="sensor-unit">%</div>
+            <div class="sensor-status" id="humiStatus">Đang đọc...</div>
+          </div>
+        </div>
+
+        <button class="btn btn-secondary btn-full" onclick="refreshSensor()" style="margin-top: 20px;">
+          <span>🔄</span>
+          <span>Làm mới dữ liệu</span>
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- HỘP THOẠI THÊM RELAY -->
-  <div id="addRelayDialog" class="dialog-overlay" style="display:none;">
-    <div class="dialog fade-in">
-      <h3><i class="fa-solid fa-plug"></i> Thêm relay mới</h3>
-      <p>Nhập tên relay và chân GPIO</p>
-      <div class="input-field">
-        <input type="text" id="relayName" placeholder="Tên relay">
-      </div>
-      <div class="input-field">
-        <input type="number" id="relayGPIO" placeholder="Chân GPIO">
-      </div>
-      <div class="dialog-buttons">
-        <button class="confirm" onclick="saveRelay()">Lưu</button>
-        <button class="cancel" onclick="closeAddRelayDialog()">Hủy</button>
-      </div>
-    </div>
-  </div>
+  <script>
+    // ==================== TAB NAVIGATION ====================
+    function showTab(tabName) {
+      // Hide all sections
+      document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.remove('active');
+      });
+      
+      // Remove active class from all tabs
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Show selected section
+      document.getElementById(tabName).classList.add('active');
+      
+      // Add active class to clicked tab
+      event.target.classList.add('active');
 
-  <!-- HỘP THOẠI XÓA -->
-  <div id="confirmDeleteDialog" class="dialog-overlay" style="display:none;">
-    <div class="dialog warning fade-in">
-      <h3>⚠️ Xác nhận xóa</h3>
-      <p>Bạn có chắc chắn muốn xóa relay này không?</p>
-      <div class="dialog-buttons">
-        <button class="danger" onclick="confirmDelete()">Xóa</button>
-        <button class="cancel" onclick="closeConfirmDelete()">Hủy</button>
-      </div>
-    </div>
-  </div>
+      // Auto-refresh sensor data when switching to sensor tab
+      if (tabName === 'sensor') {
+        refreshSensor();
+      }
+    }
 
-  <!-- JS -->
-  <script src="script.js"></script>
+    // ==================== LED CONTROL ====================
+    function initLEDControls() {
+      // LED 1
+      const led1Toggle = document.getElementById('led1Toggle');
+      const led1Slider = document.getElementById('led1Brightness');
+      const led1Value = document.getElementById('led1Value');
+      const led1Container = document.getElementById('led1SliderContainer');
+
+      led1Toggle.addEventListener('change', function() {
+        const isOn = this.checked;
+        led1Slider.disabled = !isOn;
+        
+        if (isOn) {
+          led1Container.classList.add('slider-enabled');
+          controlLED(1, 'ON', led1Slider.value);
+        } else {
+          led1Container.classList.remove('slider-enabled');
+          controlLED(1, 'OFF', 0);
+        }
+      });
+
+      led1Slider.addEventListener('input', function() {
+        led1Value.textContent = this.value + '%';
+        if (led1Toggle.checked) {
+          controlLED(1, 'ON', this.value);
+        }
+      });
+
+      // LED 2
+      const led2Toggle = document.getElementById('led2Toggle');
+      const led2Slider = document.getElementById('led2Brightness');
+      const led2Value = document.getElementById('led2Value');
+      const led2Container = document.getElementById('led2SliderContainer');
+
+      led2Toggle.addEventListener('change', function() {
+        const isOn = this.checked;
+        led2Slider.disabled = !isOn;
+        
+        if (isOn) {
+          led2Container.classList.add('slider-enabled');
+          controlLED(2, 'ON', led2Slider.value);
+        } else {
+          led2Container.classList.remove('slider-enabled');
+          controlLED(2, 'OFF', 0);
+        }
+      });
+
+      led2Slider.addEventListener('input', function() {
+        led2Value.textContent = this.value + '%';
+        if (led2Toggle.checked) {
+          controlLED(2, 'ON', this.value);
+        }
+      });
+    }
+
+    function controlLED(device, state, brightness) {
+      fetch(`/control?device=${device}&state=${state}&brightness=${brightness}`)
+        .then(response => response.text())
+        .then(data => {
+          console.log(`✅ LED${device}: ${state} @ ${brightness}%`);
+        })
+        .catch(err => {
+          console.error('❌ Control error:', err);
+        });
+    }
+
+    // ==================== WIFI SCAN ====================
+    function scanWiFi() {
+      const scanBtn = document.getElementById('scanBtn');
+      const wifiListContainer = document.getElementById('wifiListContainer');
+      const wifiList = document.getElementById('wifiList');
+      
+      scanBtn.disabled = true;
+      scanBtn.innerHTML = '<div class="spinner"></div><span>Đang quét...</span>';
+      
+      fetch('/scan')
+        .then(response => response.json())
+        .then(data => {
+          if (data.networks && data.networks.length > 0) {
+            wifiList.innerHTML = '';
+            data.networks.forEach((network, index) => {
+              const item = document.createElement('div');
+              item.className = 'wifi-item';
+              item.onclick = () => selectWiFi(network.ssid, network.encryption);
+              
+              const signal = getSignalIcon(network.rssi);
+              const encryption = network.encryption !== 'Open' ? '🔒' : '🔓';
+              
+              item.innerHTML = `
+                <div class="wifi-info">
+                  <span class="wifi-signal">${signal}</span>
+                  <div>
+                    <div class="wifi-name">${network.ssid}</div>
+                    <div class="wifi-security">${encryption} ${network.encryption} | Signal: ${network.rssi} dBm</div>
+                  </div>
+                </div>
+              `;
+              
+              wifiList.appendChild(item);
+            });
+            
+            wifiListContainer.style.display = 'block';
+            showAlert('wifiAlert', 'Tìm thấy ' + data.networks.length + ' mạng WiFi', 'success');
+          } else {
+            showAlert('wifiAlert', 'Không tìm thấy mạng WiFi nào', 'info');
+          }
+        })
+        .catch(err => {
+          console.error('Scan error:', err);
+          showAlert('wifiAlert', 'Lỗi khi quét WiFi. Vui lòng thử lại.', 'error');
+        })
+        .finally(() => {
+          scanBtn.disabled = false;
+          scanBtn.innerHTML = '<span>🔍</span><span>Quét mạng WiFi</span>';
+        });
+    }
+
+    function getSignalIcon(rssi) {
+      if (rssi > -50) return '📶';
+      if (rssi > -60) return '📶';
+      if (rssi > -70) return '📶';
+      return '📶';
+    }
+
+    function selectWiFi(ssid, encryption) {
+      document.getElementById('wifiSSID').value = ssid;
+      
+      // Remove selection from all items
+      document.querySelectorAll('.wifi-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      
+      // Add selection to clicked item
+      event.currentTarget.classList.add('selected');
+      
+      // Focus password field if network is encrypted
+      if (encryption !== 'Open') {
+        document.getElementById('wifiPassword').focus();
+      }
+    }
+
+    function connectWiFi() {
+      const ssid = document.getElementById('wifiSSID').value.trim();
+      const password = document.getElementById('wifiPassword').value;
+      
+      if (!ssid) {
+        showAlert('wifiAlert', 'Vui lòng nhập tên WiFi!', 'error');
+        return;
+      }
+      
+      showAlert('wifiAlert', 'Đang kết nối WiFi...', 'info');
+      
+      fetch(`/connect?ssid=${encodeURIComponent(ssid)}&pass=${encodeURIComponent(password)}`)
+        .then(response => response.text())
+        .then(data => {
+          showAlert('wifiAlert', '✅ ' + data + ' Hãy kiểm tra Serial Monitor.', 'success');
+        })
+        .catch(err => {
+          showAlert('wifiAlert', '❌ Lỗi kết nối: ' + err, 'error');
+        });
+    }
+
+    function clearWiFiForm() {
+      document.getElementById('wifiSSID').value = '';
+      document.getElementById('wifiPassword').value = '';
+      document.querySelectorAll('.wifi-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+    }
+
+    // ==================== AP SETTINGS ====================
+    function saveAPConfig() {
+      const ssid = document.getElementById('apSSID').value.trim();
+      const password = document.getElementById('apPassword').value;
+      
+      if (!ssid) {
+        showAlert('apAlert', 'Vui lòng nhập tên Access Point!', 'error');
+        return;
+      }
+      
+      if (password && password.length < 8) {
+        showAlert('apAlert', 'Mật khẩu phải có ít nhất 8 ký tự!', 'error');
+        return;
+      }
+      
+      showAlert('apAlert', 'Đang lưu cấu hình...', 'info');
+      
+      fetch(`/apconfig?ssid=${encodeURIComponent(ssid)}&pass=${encodeURIComponent(password)}`)
+        .then(response => response.text())
+        .then(data => {
+          showAlert('apAlert', '✅ ' + data + ' ESP32 sẽ khởi động lại sau 3 giây...', 'success');
+          setTimeout(() => {
+            showAlert('apAlert', 'Đang khởi động lại... Hãy kết nối lại với SSID mới: ' + ssid, 'info');
+          }, 3000);
+        })
+        .catch(err => {
+          showAlert('apAlert', '❌ Lỗi: ' + err, 'error');
+        });
+    }
+
+    // ==================== SENSOR MONITORING ====================
+    function refreshSensor() {
+      document.getElementById('tempValue').textContent = '--';
+      document.getElementById('humiValue').textContent = '--';
+      document.getElementById('tempStatus').textContent = 'Đang đọc...';
+      document.getElementById('humiStatus').textContent = 'Đang đọc...';
+      
+      fetch('/sensor')
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            // Sensor not found or error
+            document.getElementById('tempValue').textContent = 'N/A';
+            document.getElementById('humiValue').textContent = 'N/A';
+            document.getElementById('tempStatus').textContent = '❌ Không tìm thấy cảm biến';
+            document.getElementById('humiStatus').textContent = '❌ Không tìm thấy cảm biến';
+          } else {
+            // Display sensor data
+            document.getElementById('tempValue').textContent = data.temperature.toFixed(1);
+            document.getElementById('humiValue').textContent = data.humidity.toFixed(1);
+            document.getElementById('tempStatus').textContent = '✅ Đã cập nhật: ' + new Date().toLocaleTimeString();
+            document.getElementById('humiStatus').textContent = '✅ Đã cập nhật: ' + new Date().toLocaleTimeString();
+          }
+        })
+        .catch(err => {
+          console.error('Sensor error:', err);
+          document.getElementById('tempValue').textContent = 'ERR';
+          document.getElementById('humiValue').textContent = 'ERR';
+          document.getElementById('tempStatus').textContent = '❌ Lỗi đọc dữ liệu';
+          document.getElementById('humiStatus').textContent = '❌ Lỗi đọc dữ liệu';
+        });
+    }
+
+    // Auto-refresh sensor every 5 seconds when on sensor tab
+    let sensorInterval = null;
+    
+    function startSensorAutoRefresh() {
+      if (sensorInterval) clearInterval(sensorInterval);
+      sensorInterval = setInterval(() => {
+        const sensorSection = document.getElementById('sensor');
+        if (sensorSection.classList.contains('active')) {
+          refreshSensor();
+        }
+      }, 5000);
+    }
+
+    // ==================== UTILITY FUNCTIONS ====================
+    function showAlert(elementId, message, type) {
+      const alert = document.getElementById(elementId);
+      alert.className = `alert alert-${type} show`;
+      
+      let icon = 'ℹ️';
+      if (type === 'success') icon = '✅';
+      if (type === 'error') icon = '❌';
+      if (type === 'info') icon = 'ℹ️';
+      
+      alert.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+      
+      setTimeout(() => {
+        alert.classList.remove('show');
+      }, 5000);
+    }
+
+    // ==================== INITIALIZATION ====================
+    window.addEventListener('load', function() {
+      initLEDControls();
+      startSensorAutoRefresh();
+      
+      console.log('✅ ESP32 Control Panel loaded');
+    });
+  </script>
 </body>
-
 </html>
